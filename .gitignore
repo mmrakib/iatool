@@ -1,0 +1,29 @@
+# Byte-compiled
+__pycache__/
+__pypackages__/
+*.py[cod]
+*$py.class
+
+# Build/distribution
+build/
+dist/
+target/
+eggs/
+.eggs/
+*.eggs
+*.egg-info/
+
+# Environment
+.env
+.venv
+env/
+venv/
+env.bak/
+venv.bak/
+
+# Logs
+*.log
+*.out
+
+# Jupyter Notebook
+.ipynb_checkpoints/
