@@ -111,7 +111,7 @@ class IncomeStatementData(Data):
             "symbol": "ticker",
             "reportedCurrency": "currency",
             "cik": "cik",
-            "filingDate": "filing_date",
+            "fillingDate": "filing_date",
             "acceptedDate": "accepted_date",
             "calendarYear": "year",
             "period": "period",
@@ -142,6 +142,93 @@ class IncomeStatementData(Data):
             "epsdiluted": "eps_diluted",
             "weightedAverageShsOut": "weighted_average_shares_outstanding",
             "weightedAverageShsOutDil": "weighted_average_shares_outstanding_diluted",
+            "link": "filing_link",
+            "finalLink": "final_filing_link",
+        }
+
+        df = pd.DataFrame(raw_data)
+        df.rename(columns=key_mapping, inplace=True)
+        df["date"] = pd.to_datetime(df["date"])
+        df.set_index("date", inplace=True)
+
+        self._data = df
+
+class BalanceSheetData(Data):
+    def __init__(self, ticker: str, period: str = "quarter"):
+        if period not in ["quarter", "annual"]:
+            raise InputError("Period must be either 'quarter' or 'annual'")
+
+        super().__init__()
+        self._ticker = ticker
+        self._period = period
+
+    @property
+    def period(self) -> str:
+        return self._period
+
+    @classmethod
+    async def create(cls, session: aiohttp.ClientSession, ticker: str) -> Self:
+        data = cls(ticker)
+        await data.update(session)
+
+        return data
+    
+    async def update(self, session: aiohttp.ClientSession):
+        raw_data = await fetch_data_fmp(session, f"/balance-sheet-statement/{self._ticker}", [f"period={self._period}"])
+
+        key_mapping = {
+            "date": "date",
+            "symbol": "ticker",
+            "reportedCurrency": "currency",
+            "cik": "cik",
+            "fillingDate": "filing_date",
+            "acceptedDate": "accepted_date",
+            "calendarYear": "year",
+            "period": "period",
+            "cashAndCashEquivalents": "cash_and_cash_equivalents",
+            "shortTermInvestments": "short_term_investments",
+            "cashAndShortTermInvestments": "cash_and_short_term_investments",
+            "netReceivables": "net_receivables",
+            "inventory": "inventory",
+            "otherCurrentAssets": "other_current_assets",
+            "totalCurrentAssets": "total_current_assets",
+            "propertyPlantEquipmentNet": "net_property_plant_and_equipment",
+            "goodwill": "goodwill",
+            "intangibleAssets": "intangible_assets",
+            "goodwillAndIntangibleAssets": "goodwill_and_intangible_assets",
+            "longTermInvestments": "long_term_investments",
+            "taxAssets": "tax_assets",
+            "otherNonCurrentAssets": "other_noncurrent_assets",
+            "totalNonCurrentAssets": "total_noncurrent_assets",
+            "otherAssets": "other_assets",
+            "totalAssets": "total_assets",
+            "accountPayables": "accounts_payable",
+            "shortTermDebt": "short_term_debt",
+            "taxPayables": "tax_payables",
+            "deferredRevenue": "deferred_revenue",
+            "otherCurrentLiabilities": "other_current_liabilities",
+            "totalCurrentLiabilities": "total_current_liabilities",
+            "longTermDebt": "long_term_debt",
+            "deferredRevenueNonCurrent": "deferred_noncurrent_revenue",
+            "deferredTaxLiabilitiesNonCurrent": "deferred_noncurrent_tax_liabilities",
+            "otherNonCurrentLiabilities": "other_noncurrent_liabilities",
+            "totalNonCurrentLiabilities": "total_noncurrent_liabilities",
+            "otherLiabilities": "other_liabilities",
+            "capitalLeaseObligations": "capital_lease_obligations",
+            "totalLiabilities": "total_liabilities",
+            "preferredStock": "preferred_stock",
+            "commonStock": "common_stock",
+            "retainedEarnings": "retained_earnings",
+            "accumulatedOtherComprehensiveIncomeLoss": "accumulated_other_comprehensive_income_loss",
+            "othertotalStockholdersEquity": "other_total_stockholders_equity",
+            "totalStockholdersEquity": "total_stockholders_equity",
+            "totalEquity": "total_equity",
+            "totalLiabilitiesAndStockholdersEquity": "total_liabilities_and_stockholders_equity",
+            "minorityInterest": "minority_interest",
+            "totalLiabilitiesAndTotalEquity": "total_liabilities_and_total_equity",
+            "totalInvestments": "total_investments",
+            "totalDebt": "total_debt",
+            "netDebt": "net_debt",
             "link": "filing_link",
             "finalLink": "final_filing_link",
         }
