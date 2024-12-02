@@ -1,6 +1,5 @@
 import json
-
-from typing import Any, Dict, Self, Optional
+from typing import Any, Dict, Optional, Self
 
 class Config:
     _instance: Optional["Config"] = None
@@ -24,6 +23,10 @@ class Config:
 class ConfigSection:
     def __init__(self, values: Dict[str, Any]):
         for key, value in values.items():
-            setattr(self, key, value)
+            # Recursively convert nested dictionaries into ConfigSection objects
+            if isinstance(value, dict):
+                setattr(self, key, ConfigSection(value))
+            else:
+                setattr(self, key, value)
 
 _ = Config()
