@@ -17,7 +17,6 @@ aiohttp = "^3.11.8"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.3.2"
-black = "^24.10.0"
 
 [build-system]
 requires = ["poetry-core"]
