@@ -9,6 +9,8 @@ async def main():
         ticker = "AAPL"
         profile = await CompanyProfileData.create(session, ticker)
         print(profile.data)
+        print()
+        print(profile.data.loc["sector"])
 
 if __name__ == "__main__":
     asyncio.run(main())
