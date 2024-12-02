@@ -1,29 +1,84 @@
-import asyncio
-from typing import List
+from abc import abstractmethod
+from typing import Self
 
+import pandas as pd
 import aiohttp
 
-from .config import Config
-from .error import APIError
+from ..data.fmp import fetch_data_fmp
 
-async def fetch_data_fmp(session: aiohttp.ClientSession, url: str, args: List[str] = []) -> List[str]:
-    config = Config()
+class Data:
+    def __init__(self):
+        self._data = None
+    
+    @property
+    def data(self) -> dict:
+        return self._data
+    
+    @classmethod
+    @abstractmethod
+    async def create(cls, session: aiohttp.ClientSession, ticker: str) -> Self:
+        pass
 
-    args_str = "&".join(args)
-    full_url = f"{config.api.fmp.base_url}{url}?apikey={config.api.fmp.key}&{args_str}"
+    @abstractmethod
+    async def update(self, session: aiohttp.ClientSession):
+        pass
 
-    while True:
-        try:
-            async with session.get(full_url) as response:
-                if response.status == 429:  # Too many requests
-                    await asyncio.sleep(config.api.retry_delay)
-                response.raise_for_status()
-                return await response.json()
-        except aiohttp.ClientResponseError as http_error:
-            raise APIError(f"{http_error}")
-        except aiohttp.ClientConnectionError as conn_error:
-            raise APIError(f"{conn_error}")
-        except aiohttp.ClientPayloadError as payload_error:
-            raise APIError(f"{payload_error}")
-        except Exception as error:
-            raise APIError(f"{error}")
+class CompanyProfileData(Data):
+    def __init__(self, ticker: str):
+        super().__init__()
+        self._ticker = ticker
+
+    @classmethod
+    async def create(cls, session: aiohttp.ClientSession, ticker: str) -> Self:
+        data = cls(ticker)
+        await data.update(session)
+
+        return data
+    
+    async def update(self, session: aiohttp.ClientSession):
+        raw_data = await fetch_data_fmp(session, f"/profile/{self._ticker}")
+        raw_data = raw_data[0]
+
+        key_mapping = {
+            "symbol": "ticker",
+            "price": "price",
+            "beta": "beta",
+            "volAvg": "vol_avg",
+            "mktCap": "market_cap",
+            "lastDiv": "last_dividend",
+            "range": "price_range",
+            "changes": "price_changes",
+            "companyName": "name",
+            "currency": "currency",
+            "cik": "cik",
+            "isin": "isin",
+            "cusip": "cusip",
+            "exchange": "exchange_name",
+            "exchangeShortName": "exchange_ticker",
+            "industry": "industry",
+            "website": "website",
+            "description": "description",
+            "ceo": "ceo",
+            "sector": "sector",
+            "country": "country",
+            "fullTimeEmployees": "num_full_time_employees",
+            "phone": "phone",
+            "address": "address",
+            "city": "city",
+            "state": "state",
+            "zip": "zip",
+            "dcfDiff": "dcf_diff",
+            "dcf": "dcf",
+            "image": "image_url",
+            "ipoDate": "ipo_date",
+            "defaultImage": "image_default",
+            "isEtf": "is_etf",
+            "isActivelyTrading": "is_actively_trading",
+            "isAdr": "is_adr",
+            "isFund": "is_fund",
+        }
+
+        mapped_data = {key_mapping.get(k, k): v for k, v in raw_data.items()}
+
+        self._data = pd.Series(mapped_data)
+

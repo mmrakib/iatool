@@ -23,7 +23,6 @@ class Config:
 class ConfigSection:
     def __init__(self, values: Dict[str, Any]):
         for key, value in values.items():
-            # Recursively convert nested dictionaries into ConfigSection objects
             if isinstance(value, dict):
                 setattr(self, key, ConfigSection(value))
             else:
