@@ -239,3 +239,76 @@ class BalanceSheetData(Data):
         df.set_index("date", inplace=True)
 
         self._data = df
+
+class CashFlowData(Data):
+    def __init__(self, ticker: str, period: str = "quarter"):
+        if period not in ["quarter", "annual"]:
+            raise InputError("Period must be either 'quarter' or 'annual'")
+
+        super().__init__()
+        self._ticker = ticker
+        self._period = period
+
+    @property
+    def period(self) -> str:
+        return self._period
+
+    @classmethod
+    async def create(cls, session: aiohttp.ClientSession, ticker: str) -> Self:
+        data = cls(ticker)
+        await data.update(session)
+
+        return data
+    
+    async def update(self, session: aiohttp.ClientSession):
+        raw_data = await fetch_data_fmp(session, f"/cash-flow-statement/{self._ticker}", [f"period={self._period}"])
+
+        key_mapping = {
+            "date": "date",
+            "symbol": "ticker",
+            "reportedCurrency": "currency",
+            "cik": "cik",
+            "fillingDate": "filing_date",
+            "acceptedDate": "accepted_date",
+            "calendarYear": "year",
+            "period": "period",
+            "netIncome": "net_income",
+            "depreciationAndAmortization": "depreciation_and_amortization",
+            "deferredIncomeTax": "deferred_income_tax",
+            "stockBasedCompensation": "stock_based_compensation",
+            "changeInWorkingCapital": "change_in_working_capital",
+            "accountsReceivables": "accounts_receivable",
+            "inventory": "inventory",
+            "accountsPayables": "accounts_payable",
+            "otherWorkingCapital": "other_working_capital",
+            "otherNonCashItems": "other_noncash_items",
+            "netCashProvidedByOperatingActivities": "net_cash_provided_by_operating_activities",
+            "investmentsInPropertyPlantAndEquipment": "investments_in_property_plant_and_equipment",
+            "acquisitionsNet": "net_acquisitions",
+            "purchasesOfInvestments": "purchases_of_investments",
+            "salesMaturitiesOfInvestments": "sales_and_maturities_of_investments",
+            "otherInvestingActivites": "other_investing_activities",
+            "netCashUsedForInvestingActivites": "net_cash_used_for_investing_activities",
+            "debtRepayment": "debt_repayment",
+            "commonStockIssued": "common_stock_issued",
+            "commonStockRepurchased": "common_stock_repurchased",
+            "dividendsPaid": "dividends_paid",
+            "otherFinancingActivites": "other_financing_activities",
+            "netCashUsedProvidedByFinancingActivities": "net_cash_used_provided_by_financing_activities",
+            "effectOfForexChangesOnCash": "effect_of_forex_changes_on_cash",
+            "netChangeInCash": "net_change_in_cash",
+            "cashAtEndOfPeriod": "cash_at_end",
+            "cashAtBeginningOfPeriod": "cash_at_beginning",
+            "operatingCashFlow": "operating_cash_flow",
+            "capitalExpenditure": "capital_expenditure",
+            "freeCashFlow": "free_cash_flow",
+            "link": "filing_link",
+            "finalLink": "final_filing_link",
+        }
+
+        df = pd.DataFrame(raw_data)
+        df.rename(columns=key_mapping, inplace=True)
+        df["date"] = pd.to_datetime(df["date"])
+        df.set_index("date", inplace=True)
+
+        self._data = df
