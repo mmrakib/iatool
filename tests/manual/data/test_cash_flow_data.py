@@ -8,7 +8,7 @@ from iatool.core.data import CashFlowData
 async def main():
     async with aiohttp.ClientSession() as session:
         ticker = "AAPL"
-        cash_flow = await CashFlowData.create(session, ticker)
+        cash_flow = await CashFlowData.create(session, ticker, "quarter")
         print(cash_flow.data)
         print()
         print(cash_flow.data.loc["2023-09-30"])

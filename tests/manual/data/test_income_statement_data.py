@@ -8,7 +8,7 @@ from iatool.core.data import IncomeStatementData
 async def main():
     async with aiohttp.ClientSession() as session:
         ticker = "AAPL"
-        income_statement = await IncomeStatementData.create(session, ticker)
+        income_statement = await IncomeStatementData.create(session, ticker, "quarter")
         print(income_statement.data)
         print()
         print(income_statement.data.loc["2023-09-30"])

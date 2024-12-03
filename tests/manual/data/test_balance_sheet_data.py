@@ -8,7 +8,7 @@ from iatool.core.data import BalanceSheetData
 async def main():
     async with aiohttp.ClientSession() as session:
         ticker = "AAPL"
-        balance_sheet = await BalanceSheetData.create(session, ticker)
+        balance_sheet = await BalanceSheetData.create(session, ticker, "quarter")
         print(balance_sheet.data)
         print()
         print(balance_sheet.data.loc["2023-09-30"])

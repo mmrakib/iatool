@@ -2,7 +2,7 @@ import json
 from typing import Any, Dict, Optional, Self
 
 class Config:
-    _instance: Optional["Config"] = None
+    _instance: Optional[Self] = None
     _data: Dict[str, Any] = {}
 
     def __new__(cls, filepath: str = "config.json") -> Self:
