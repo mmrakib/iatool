@@ -92,7 +92,7 @@ class IncomeStatementData(Data):
 
     @classmethod
     async def create(cls, session: aiohttp.ClientSession, ticker: str, period: str) -> Self:
-        data = cls(ticker, period)
+        data = cls(session, ticker, period)
         await data.update()
 
         return data
