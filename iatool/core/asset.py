@@ -8,8 +8,8 @@ from .util import get_date_range
 
 class Asset:
     def __init__(self, session: aiohttp.ClientSession, ticker: str):
-        self._ticker = ticker
         self._session = session
+        self._ticker = ticker
 
         self._profile = None
 
@@ -22,12 +22,12 @@ class Asset:
         self._cash_flow_annual = None
 
     @property
-    def ticker(self) -> str:
-        return self._ticker
-    
-    @property
     def session(self) -> aiohttp.ClientSession:
         return self._session
+
+    @property
+    def ticker(self) -> str:
+        return self._ticker
     
     @classmethod
     async def create(cls, session: aiohttp.ClientSession, ticker: str) -> Self:
@@ -56,13 +56,16 @@ class Asset:
         self._balance_sheet_annual.update()
         self._cash_flow_annual.update()
 
+    def get_profile(self):
+        return self._profile.data
+
     def get_income_statement(self, start_date: str, end_date: str, period: str):
         if period == "quarter":
-            filtered_data = get_date_range(self._income_statement_quarter, start_date, end_date)
+            filtered_data = get_date_range(self._income_statement_quarter.data, start_date, end_date)
 
             return filtered_data
         elif period == "annual":
-            filtered_data = get_date_range(self._income_statement_annual, start_date, end_date)
+            filtered_data = get_date_range(self._income_statement_annual.data, start_date, end_date)
 
             return filtered_data
         else:
@@ -70,11 +73,11 @@ class Asset:
 
     def get_balance_sheet(self, start_date: str, end_date: str, period: str):
         if period == "quarter":
-            filtered_data = get_date_range(self._balance_sheet_quarter, start_date, end_date)
+            filtered_data = get_date_range(self._balance_sheet_quarter.data, start_date, end_date)
 
             return filtered_data
         elif period == "annual":
-            filtered_data = get_date_range(self._balance_sheet_annual, start_date, end_date)
+            filtered_data = get_date_range(self._balance_sheet_annual.data, start_date, end_date)
 
             return filtered_data
         else:
@@ -82,11 +85,11 @@ class Asset:
         
     def get_cash_flow(self, start_date: str, end_date: str, period: str):
         if period == "quarter":
-            filtered_data = get_date_range(self._cash_flow_quarter, start_date, end_date)
+            filtered_data = get_date_range(self._cash_flow_quarter.data, start_date, end_date)
 
             return filtered_data
         elif period == "annual":
-            filtered_data = get_date_range(self._cash_flow_annual, start_date, end_date)
+            filtered_data = get_date_range(self._cash_flow_annual.data, start_date, end_date)
 
             return filtered_data
         else:
