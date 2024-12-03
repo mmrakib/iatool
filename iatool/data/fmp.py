@@ -9,6 +9,7 @@ from ..core.error import APIError
 from ..core.error import InputError
 
 endpoints = {
+    "exchange_tickers": "/symbol/",
     "profile": "/profile/",
     "income_statement": "/income-statement/",
     "balance_sheet": "/balance-sheet-statement/",
@@ -43,6 +44,15 @@ async def fmp_fetch_data(
         except Exception as error:
             raise APIError(f"{error}")
         
+async def fmp_fetch_all_tickers_exchange(
+    session: aiohttp.ClientSession,
+    exchange: str
+) -> List[str]:
+    raw_data = fmp_fetch_data(session, f"{endpoints["exchange_tickers"]}{exchange}")
+    tickers = [item["symbol"] for item in raw_data]
+
+    return tickers
+
 async def fmp_fetch_company_profile(
     session: aiohttp.ClientSession,
     ticker: str
