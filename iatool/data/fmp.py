@@ -28,6 +28,11 @@ async def fmp_fetch_data(
     args_str = "&".join(args)
     full_url = f"{base}{url}?apikey={key}&{args_str}"
 
+    if args:
+        print(f"Fetching data from: {base}{url}?{args_str}")
+    else:
+        print(f"Fetching data from: {base}{url}")
+
     while True:
         try:
             async with session.get(full_url) as response:
@@ -49,6 +54,10 @@ async def fmp_fetch_all_tickers_exchange(
     exchange: str
 ) -> List[str]:
     raw_data = await fmp_fetch_data(session, f"{endpoints["exchange_tickers"]}{exchange}")
+
+    if not raw_data:
+        raise APIError("No data found")
+
     tickers = [item["symbol"] for item in raw_data]
 
     return tickers
@@ -98,6 +107,9 @@ async def fmp_fetch_company_profile(
         "isAdr": "is_adr",
         "isFund": "is_fund",
     }
+
+    if not raw_data:
+        raise APIError("No data found")
 
     mapped_data = {key_mapping.get(k, k): v for k, v in raw_data.items()}
     ds = pd.Series(mapped_data)
@@ -153,6 +165,9 @@ async def fmp_fetch_income_statement(
         "link": "filing_link",
         "finalLink": "final_filing_link",
     }
+
+    if not raw_data:
+        return pd.DataFrame()
 
     df = pd.DataFrame(raw_data)
     df.rename(columns=key_mapping, inplace=True)
@@ -228,6 +243,9 @@ async def fmp_fetch_balance_sheet(
         "finalLink": "final_filing_link",
     }
 
+    if not raw_data:
+        return pd.DataFrame()
+
     df = pd.DataFrame(raw_data)
     df.rename(columns=key_mapping, inplace=True)
     df["date"] = pd.to_datetime(df["date"])
@@ -287,6 +305,9 @@ async def fmp_fetch_cash_flow(
         "link": "filing_link",
         "finalLink": "final_filing_link",
     }
+
+    if not raw_data:
+        return pd.DataFrame()
 
     df = pd.DataFrame(raw_data)
     df.rename(columns=key_mapping, inplace=True)

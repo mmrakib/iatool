@@ -3,6 +3,9 @@ from typing import Union
 import pandas as pd
 
 def get_date_range(data: Union[pd.Series, pd.DataFrame], start_date: str, end_date: str) -> Union[pd.Series, pd.DataFrame]:
+    if data.empty:
+        return data
+
     if not isinstance(data.index, pd.DatetimeIndex):
         raise ValueError("Data must have a datetime index")
     
