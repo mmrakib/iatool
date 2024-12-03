@@ -48,7 +48,7 @@ async def fmp_fetch_all_tickers_exchange(
     session: aiohttp.ClientSession,
     exchange: str
 ) -> List[str]:
-    raw_data = fmp_fetch_data(session, f"{endpoints["exchange_tickers"]}{exchange}")
+    raw_data = await fmp_fetch_data(session, f"{endpoints["exchange_tickers"]}{exchange}")
     tickers = [item["symbol"] for item in raw_data]
 
     return tickers
@@ -57,7 +57,7 @@ async def fmp_fetch_company_profile(
     session: aiohttp.ClientSession,
     ticker: str
 ) -> pd.Series:
-    raw_data = fmp_fetch_data(session, f"{endpoints["profile"]}{ticker}")
+    raw_data = await fmp_fetch_data(session, f"{endpoints["profile"]}{ticker}")
     raw_data = raw_data[0]
 
     key_mapping = {
