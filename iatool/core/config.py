@@ -3,13 +3,15 @@ from typing import Any, Dict, Optional, Self
 
 class Config:
     _instance: Optional[Self] = None
+    _filepath: str = "config.json"
     _data: Dict[str, Any] = {}
 
     def __new__(cls, filepath: str = "config.json") -> Self:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
+            cls._filepath = filepath
 
-            with open(filepath, "r") as file:
+            with open(cls._filepath, "r") as file:
                 cls._instance._data = json.load(file)
 
             for section, values in cls._instance._data.items():
