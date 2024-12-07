@@ -30,3 +30,6 @@ venv.bak/
 
 # Config
 config.json
+
+# Data
+data/
