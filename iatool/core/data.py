@@ -1,3 +1,4 @@
+import os
 from abc import abstractmethod
 from typing import Self, Union
 
@@ -9,6 +10,9 @@ from ..data.fmp import fmp_fetch_income_statement
 from ..data.fmp import fmp_fetch_balance_sheet
 from ..data.fmp import fmp_fetch_cash_flow
 from ..data.fmp import fmp_fetch_all_tickers_exchange
+
+CACHE_DIR = "data"
+os.makedirs(CACHE_DIR, exist_ok=True)
 
 class Data:
     def __init__(self, session: aiohttp.ClientSession):
@@ -29,6 +33,9 @@ class Data:
 
         return self._session
     
+    @abstractmethod
+    
+
     @classmethod
     @abstractmethod
     async def create(cls, session: aiohttp.ClientSession) -> Self:
