@@ -35,6 +35,7 @@ class Cache:
             return None
 
         try:
+            print(f"Retrieving data from cache: {final_path}")
             return pd.read_feather(final_path)
         except FileNotFoundError:
             return None
