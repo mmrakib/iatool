@@ -1,9 +1,13 @@
 import os
 from abc import abstractmethod
 from typing import Self, Union
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 import aiohttp
 import pandas as pd
+
+from .cache import Cache
 
 from ..data.fmp import fmp_fetch_company_profile
 from ..data.fmp import fmp_fetch_income_statement
@@ -11,14 +15,13 @@ from ..data.fmp import fmp_fetch_balance_sheet
 from ..data.fmp import fmp_fetch_cash_flow
 from ..data.fmp import fmp_fetch_all_tickers_exchange
 
-CACHE_DIR = "data"
-os.makedirs(CACHE_DIR, exist_ok=True)
-
 class Data:
+    _cache = Cache()
+
     def __init__(self, session: aiohttp.ClientSession):
         self._session = session
         self._data = None
-        
+    
     @property
     def data(self) -> Union[list, dict, pd.Series, pd.DataFrame]:
         if self._data is None:
@@ -32,9 +35,6 @@ class Data:
             raise ValueError("Data component has no HTTP session")
 
         return self._session
-    
-    @abstractmethod
-    
 
     @classmethod
     @abstractmethod
@@ -56,6 +56,11 @@ class AllTickersExchangeData(Data):
 
     @classmethod
     async def create(cls, session: aiohttp.ClientSession, exchange: str) -> Self:
+        cached_data = cls._cache.get(f"all_tickers_data/{exchange}.feather")
+
+        if cached_data is not None:
+            return cached_data
+
         data = cls(session, exchange)
         await data.update()
 
@@ -63,6 +68,9 @@ class AllTickersExchangeData(Data):
     
     async def update(self):
         self._data = await fmp_fetch_all_tickers_exchange(self._session, self._exchange)
+
+        expiry = datetime.now() + relativedelta(months=6)
+        self._cache.set(f"all_tickers_data/{self._exchange}.feather", self._data, expiry)
 
 class CompanyProfileData(Data):
     def __init__(self, session: aiohttp.ClientSession, ticker: str):
@@ -75,13 +83,22 @@ class CompanyProfileData(Data):
 
     @classmethod
     async def create(cls, session: aiohttp.ClientSession, ticker: str) -> Self:
+        cached_data = cls._cache.get(f"profile_data/{ticker}.feather")
+
         data = cls(session, ticker)
-        await data.update()
+
+        if cached_data is not None:
+            data._data = cached_data
+        else:
+            await data.update()
 
         return data
     
     async def update(self):
         self._data = await fmp_fetch_company_profile(self._session, self._ticker)
+
+        expiry = datetime.now() + relativedelta(months=6)
+        self._cache.set(f"profile_data/{self._ticker}.feather", self._data, expiry)
 
 class IncomeStatementData(Data):
     def __init__(self, session: aiohttp.ClientSession, ticker: str, period: str):
@@ -99,13 +116,22 @@ class IncomeStatementData(Data):
 
     @classmethod
     async def create(cls, session: aiohttp.ClientSession, ticker: str, period: str) -> Self:
+        cached_data = cls._cache.get(f"income_statement_data_{period}/{ticker}.feather")
+
         data = cls(session, ticker, period)
-        await data.update()
+
+        if cached_data is not None:
+            data._data = cached_data
+        else:
+            await data.update()
 
         return data
     
     async def update(self):
         self._data = await fmp_fetch_income_statement(self._session, self._ticker, self._period)
+
+        expiry = datetime.now() + (relativedelta(months=3) if self._period == "quarter" else relativedelta(months=6))
+        self._cache.set(f"income_statement_data_{self._period}/{self._ticker}.feather", self._data, expiry)
 
 class BalanceSheetData(Data):
     def __init__(self, session: aiohttp.ClientSession, ticker: str, period: str):
@@ -123,13 +149,22 @@ class BalanceSheetData(Data):
 
     @classmethod
     async def create(cls, session: aiohttp.ClientSession, ticker: str, period: str) -> Self:
+        cached_data = cls._cache.get(f"balance_sheet_data_{period}/{ticker}.feather")
+
         data = cls(session, ticker, period)
-        await data.update()
+
+        if cached_data is not None:
+            data._data = cached_data
+        else:
+            await data.update()
 
         return data
     
     async def update(self):
         self._data = await fmp_fetch_balance_sheet(self._session, self._ticker, self._period)
+
+        expiry = datetime.now() + (relativedelta(months=3) if self._period == "quarter" else relativedelta(months=6))
+        self._cache.set(f"balance_sheet_data_{self._period}/{self._ticker}.feather", self._data, expiry)
 
 class CashFlowData(Data):
     def __init__(self, session: aiohttp.ClientSession, ticker: str, period: str = "quarter"):
@@ -147,10 +182,19 @@ class CashFlowData(Data):
 
     @classmethod
     async def create(cls, session: aiohttp.ClientSession, ticker: str, period: str) -> Self:
+        cached_data = cls._cache.get(f"cash_flow_data_{period}/{ticker}.feather")
+
         data = cls(session, ticker, period)
-        await data.update()
+
+        if cached_data is not None:
+            data._data = cached_data
+        else:
+            await data.update()
 
         return data
     
     async def update(self):
         self._data = await fmp_fetch_cash_flow(self._session, self._ticker, self._period)
+
+        expiry = datetime.now() + (relativedelta(months=3) if self._period == "quarter" else relativedelta(months=6))
+        self._cache.set(f"cash_flow_data_{self._period}/{self._ticker}.feather", self._data, expiry)

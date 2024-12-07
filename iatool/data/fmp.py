@@ -52,7 +52,7 @@ async def fmp_fetch_data(
 async def fmp_fetch_all_tickers_exchange(
     session: aiohttp.ClientSession,
     exchange: str
-) -> List[str]:
+) -> pd.Series:
     raw_data = await fmp_fetch_data(session, f"{endpoints["exchange_tickers"]}{exchange}")
 
     if not raw_data:
@@ -60,7 +60,9 @@ async def fmp_fetch_all_tickers_exchange(
 
     tickers = [item["symbol"] for item in raw_data]
 
-    return tickers
+    df = pd.Series(tickers)
+
+    return df
 
 async def fmp_fetch_company_profile(
     session: aiohttp.ClientSession,
