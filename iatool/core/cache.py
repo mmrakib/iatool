@@ -4,7 +4,6 @@ from datetime import datetime
 from typing import Optional, Union
 import pandas as pd
 
-
 class Cache:
     _instance: Optional["Cache"] = None
     _dirname: str = "./data"
