@@ -124,25 +124,60 @@ async def fmp_fetch_historical_prices(
     session: aiohttp.ClientSession,
     ticker: str,
     start_date: str = "1990-01-01",
-) -> pd.Series:
+) -> pd.DataFrame:
     raw_data = await fmp_fetch_data(session, f"{endpoints['historical_prices']}{ticker}", [f"from={start_date}"])
 
     if not raw_data or "historical" not in raw_data:
-        return pd.Series()
+        return pd.DataFrame()
 
     dates = []
-    prices = []
+    open_prices = []
+    high_prices = []
+    low_prices = []
+    close_prices = []
+    adj_close_prices = []
+    volumes = []
+    unadjusted_volumes = []
+    changes = []
+    change_percent = []
+    vwap = []
+    labels = []
+    change_over_time = []
 
     for entry in raw_data["historical"]:
-        date = datetime.strptime(entry["date"], "%Y-%m-%d")
-        close_price = entry["close"]
-        
-        dates.append(date)
-        prices.append(close_price)
+        dates.append(datetime.strptime(entry["date"], "%Y-%m-%d"))
+        open_prices.append(entry["open"])
+        high_prices.append(entry["high"])
+        low_prices.append(entry["low"])
+        close_prices.append(entry["close"])
+        adj_close_prices.append(entry["adjClose"])
+        volumes.append(entry["volume"])
+        unadjusted_volumes.append(entry["unadjustedVolume"])
+        changes.append(entry["change"])
+        change_percent.append(entry["changePercent"])
+        vwap.append(entry["vwap"])
+        labels.append(entry["label"])
+        change_over_time.append(entry["changeOverTime"])
 
-    price_series = pd.Series(prices, index=pd.to_datetime(dates), name="Close Price")
-    
-    return price_series
+    df = pd.DataFrame({
+        "date": pd.to_datetime(dates),
+        "open": open_prices,
+        "high": high_prices,
+        "low": low_prices,
+        "close": close_prices,
+        "adj_close": adj_close_prices,
+        "volume": volumes,
+        "unadjusted_volume": unadjusted_volumes,
+        "change": changes,
+        "change_percent": change_percent,
+        "vwap": vwap,
+        "label": labels,
+        "change_over_time": change_over_time
+    })
+
+    df.set_index("date", inplace=True)
+
+    return df
 
 async def fmp_fetch_income_statement(
     session: aiohttp.ClientSession, 
