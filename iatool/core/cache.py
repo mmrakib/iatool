@@ -58,7 +58,10 @@ class Cache:
         with open(meta_path, "w") as file:
             json.dump(metadata, file, indent=4)
 
+        if isinstance(data, pd.Series):
+            data = data.to_frame(name="Value")
+
         try:
             data.to_feather(final_path)
         except Exception as e:
-            print(f"{e}")
+            print(f"Error while saving data: {e}")

@@ -1,5 +1,6 @@
 import asyncio
 from typing import List
+from datetime import datetime
 
 import aiohttp
 import pandas as pd
@@ -14,6 +15,7 @@ endpoints = {
     "income_statement": "/income-statement/",
     "balance_sheet": "/balance-sheet-statement/",
     "cash_flow": "/cash-flow-statement/",
+    "historical_prices": "/historical-price-full/",
 }
 
 async def fmp_fetch_data(
@@ -117,6 +119,30 @@ async def fmp_fetch_company_profile(
     ds = pd.Series(mapped_data)
     
     return ds
+
+async def fmp_fetch_historical_prices(
+    session: aiohttp.ClientSession,
+    ticker: str,
+    start_date: str = "1990-01-01",
+) -> pd.Series:
+    raw_data = await fmp_fetch_data(session, f"{endpoints['historical_prices']}{ticker}", [f"from={start_date}"])
+
+    if not raw_data or "historical" not in raw_data:
+        return pd.Series()
+
+    dates = []
+    prices = []
+
+    for entry in raw_data["historical"]:
+        date = datetime.strptime(entry["date"], "%Y-%m-%d")
+        close_price = entry["close"]
+        
+        dates.append(date)
+        prices.append(close_price)
+
+    price_series = pd.Series(prices, index=pd.to_datetime(dates), name="Close Price")
+    
+    return price_series
 
 async def fmp_fetch_income_statement(
     session: aiohttp.ClientSession, 

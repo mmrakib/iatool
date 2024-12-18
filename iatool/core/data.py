@@ -14,6 +14,7 @@ from ..data.fmp import fmp_fetch_income_statement
 from ..data.fmp import fmp_fetch_balance_sheet
 from ..data.fmp import fmp_fetch_cash_flow
 from ..data.fmp import fmp_fetch_all_tickers_exchange
+from ..data.fmp import fmp_fetch_historical_prices
 
 class Data:
     _cache = Cache()
@@ -99,6 +100,40 @@ class CompanyProfileData(Data):
 
         expiry = datetime.now() + relativedelta(months=6)
         self._cache.set(f"profile_data/{self._ticker}.feather", self._data, expiry)
+
+class HistoricalPricesData(Data):
+    def __init__(self, session: aiohttp.ClientSession, ticker: str, start_date: str = "1990-01-01"):
+        super().__init__(session)
+        self._ticker = ticker
+        self._start_date = start_date
+
+    @property
+    def ticker(self) -> str:
+        return self._ticker
+
+    @property
+    def start_date(self) -> str:
+        return self._start_date
+
+    @classmethod
+    async def create(cls, session: aiohttp.ClientSession, ticker: str, start_date: str = "1990-01-01") -> Self:
+        cache_key = f"historical_prices/{ticker}_{start_date}.feather"
+        cached_data = cls._cache.get(cache_key)
+
+        data = cls(session, ticker, start_date)
+        if cached_data is not None:
+            data._data = cached_data
+        else:
+            await data.update()
+
+        return data
+    
+    async def update(self):
+        self._data = await fmp_fetch_historical_prices(self._session, self._ticker, self._start_date)
+
+        expiry = datetime.now() + relativedelta(months=6)
+        cache_key = f"historical_prices/{self._ticker}_{self._start_date}.feather"
+        self._cache.set(cache_key, self._data, expiry)
 
 class IncomeStatementData(Data):
     def __init__(self, session: aiohttp.ClientSession, ticker: str, period: str):
