@@ -18,7 +18,7 @@ In order for the program to work, you must create a configuration file named `co
         "fmp": {
             "base": "https://financialmodelingprep.com/api/v3",
             "key": "<your api key>",
-            "retry_delay": 5 // seconds
+            "retry_delay": 5
         }
     }
 }
